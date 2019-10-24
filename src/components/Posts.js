@@ -1,13 +1,77 @@
 import React, {Component} from 'react';
-import Post from './Post';
+import InstaService from '../services/instaService';
+import User from './User';
+import ErrorMessage from './Error';
+/*import Post from './Post';*/
 
 export default class Posts extends Component{
-    render(){
+    InstaService = new InstaService();
+    state = {
+        posts: [],
+        error: false
+    }
+
+    componentDidMount(){
+        this.updatePosts();
+    }
+
+    updatePosts(){
+        this.InstaService.getAllPosts()
+        .then(this.onPostsLoaded)
+        .catch(this.onError);
+    }
+
+    onPostsLoaded = (posts)=>{
+        this.setState({
+            posts,
+            error: false
+        });
+        console.log(this.state.posts);
+    }
+
+    onError = (err)=>{
+        this.setState({
+            error: true
+        })
+    }
+
+    renderItems(arr){
+        return arr.map(item=>{
+            const {name, altname, photo, src, alt, descr, id} = item;
+
+            return (
+                <div key={id} className="post">
+                <User src={photo}
+                alt={alt} 
+                name={name}
+                min={true}/>
+                <img src={src} alt={alt}></img>
+                <div className="post__name">
+                    {name}
+                </div>
+                <div className="post__descr">
+                    {descr}
+                </div>
+            </div>
+            )
+        });
+    }
+
+    render() {
+
+        const {error, posts} = this.state;
+
+        if(error){
+            return(
+                <ErrorMessage/>
+            )
+        }
+
+        const items = this.renderItems(posts);
+
         return(
             <div className="left">
-                 <Post src="data:image/jpeg;base64,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" alt="The man"/>
-
-                <Post src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRdU2Q_kQI0G-sn6SjZTnSI2pgkp-sS0AZLhnDu-DN3kbGgJ00e7g&s" alt="The Man 2"/>
+                {items}
             </div>
         )
    }
